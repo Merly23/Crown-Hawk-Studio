@@ -7,7 +7,7 @@ using CHS.Combat;
 
 namespace CHS.Players
 {
-    [RequireComponent(typeof(MoveController))]
+    [RequireComponent(typeof(CharacterController))]
     public class Player : MonoBehaviour
     {
         [System.Serializable]
@@ -18,16 +18,25 @@ namespace CHS.Players
             public bool LockMouse;
         }
 
+
+        [Header("Physics")]
+        public float gravity;
+        public float jumpForce;
+        public Vector3 direction;
+
+        [Header("Speeds")]
         [SerializeField] float runSpeed;
         [SerializeField] float walkSpeed;
         [SerializeField] float crouchSpeed;
         [SerializeField] float sprintSpeed;
 
+        [Header("Aim Script")]
         public PlayerAim playerAim;
 
+        [Header("Mouse Control")]
         [SerializeField] MouseInput MouseControl;
 
-        MoveController moveController;
+        CharacterController moveController;
         InputController playerInput;
         Crosshair crosshair;
 
@@ -45,7 +54,7 @@ namespace CHS.Players
         private void Start()
         {
             playerInput = GetComponent<InputController>();
-            moveController = GetComponent<MoveController>();
+            moveController = GetComponent<CharacterController>();
             crosshair = GetComponentInChildren<Crosshair>();
         }
 
@@ -66,8 +75,20 @@ namespace CHS.Players
             if (playerInput.IsCrouched)
                 moveSpeed = crouchSpeed;
 
-            Vector2 direction = new Vector2(playerInput.Vertical * moveSpeed, playerInput.Horizontal * moveSpeed);
-            moveController.Move(direction);
+            if (moveController.isGrounded)
+            {
+                direction = new Vector3(playerInput.Horizontal, 0, playerInput.Vertical);
+                direction = transform.TransformDirection(direction);
+                direction *= moveSpeed;
+
+                if (playerInput.Jump)
+                {
+                    direction.y = jumpForce;
+                }
+            }
+
+            direction.y -= gravity * Time.deltaTime;
+            moveController.Move(direction * Time.deltaTime);
         }
 
 
