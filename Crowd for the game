@@ -1,0 +1,88 @@
+using System.Collections;
+using System.Collections.Generic;
+using UnityEngine;
+
+public class CManager : MonoBehaviour
+{
+    //this Script Managers CrowdNumber
+    [SerializeField]Transform CrowdNumbers;
+    public Vector2 Aimap;
+    [SerializeField]private Transform newAipos;
+    [SerializeField] private GameObject soundspawn;
+    [SerializeField] Transform pointthatmoves;
+    [SerializeField] bool istrue;
+    [SerializeField]float Timer;
+    //this is an working and Optional Mechanic fof the game
+    [SerializeField] AudioSource microphone;
+    [SerializeField]float loudeness=0;
+    [SerializeField]float sentive = 100;
+    public void Awake()
+    {
+        istrue = false;
+        microphone = GetComponent<AudioSource>();
+        microphone.clip = Microphone.Start(null, true, 10, 4410);
+        microphone.loop = true;
+        microphone.mute = false;
+        while (!(Microphone.GetPosition(null) > 0))
+        {
+
+            microphone.Play();
+        }
+        Timer = 0;
+        for(int i =0; i < Aimap.x; i++)
+        {
+            for (int j = 0; j < Aimap.y; j++)
+            {
+
+                Vector3 Aipos = new Vector3(-Aimap.x / 2 + 0.5f+i, 0, -Aimap.y / 2 + 0.5f+j);
+                
+                newAipos =Instantiate(CrowdNumbers, Aipos, Quaternion.identity);
+                
+            }
+        }
+    }
+    
+    private void Update()
+    {
+
+        //mirco phone logic
+        loudeness = getAverageVolume() * sentive;
+
+        Timer += 1*Time.deltaTime;
+
+        if (Timer >= 1.2f)
+        {
+            Timer = 1.2f;
+            istrue = true;
+            StartCoroutine(SpawnSound(istrue));
+        }
+        else if(Timer ==1.2f) {
+
+            istrue = false;
+        }
+         
+         
+    }
+    float getAverageVolume()
+    {
+
+        float[] data = new float[256];
+        float a = 0;
+        microphone.GetOutputData(data, 0);
+        foreach (float s in data)
+        {
+            a += Mathf.Abs(s);
+        }
+        return a / 256;
+    }
+    IEnumerator SpawnSound(bool check) {
+        if(check)
+        //sound effect;
+
+        soundspawn.transform.position = new Vector3(-pointthatmoves.transform.position.x+Random.Range(0,5)+2000, 120, -pointthatmoves.transform.position.z + Random.Range(0, 5)+2000);
+        yield return new WaitForSeconds(1.4f);
+        istrue = false;
+        Timer = 0;
+    }
+      
+}
