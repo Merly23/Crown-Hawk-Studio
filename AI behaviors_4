@@ -1,0 +1,103 @@
+using System.Collections;
+using System.Collections.Generic;
+using UnityEngine;
+using UnityEngine.AI;
+using System.Threading;
+using UnityEngine.UI;
+public class AiBehavoir : MonoBehaviour
+{
+    //this Ai has 3 Behavoirs
+    //2 meters still
+    //4 meters runways from sound 
+    //6 meters hide behind objects
+    [SerializeField] NavMeshAgent agent;
+    [SerializeField] public Transform soundorigin;
+    public Transform cover, moveways;
+    CManager soundref;
+    [SerializeField]Material mat;
+    [SerializeField]public bool Audiodetection, offothers;    
+    public Text output;
+    //trying out threading for crowds Main and child threads
+  
+     
+    private void Start()
+    {
+        
+
+        offothers = false;
+        agent = this.gameObject.GetComponent<NavMeshAgent>();
+        soundorigin =GameObject.FindGameObjectWithTag("w").transform;
+        cover = GameObject.FindGameObjectWithTag("c").transform;
+        moveways = GameObject.FindGameObjectWithTag("mw").transform;
+        soundref = FindObjectOfType<CManager>();
+        // StartCoroutine(CheckConditon()); 
+        output = FindObjectOfType<Text>();
+         
+    }
+
+    
+    private void Update()
+    {
+       
+        if (!offothers)
+        {
+            print("isinq");
+            float dist = agent.remainingDistance;
+            if (output != null)
+            {
+                output.text = "" + dist;
+            }
+            agent.SetDestination(-soundorigin.position);
+            if (soundref.GetComponent<CManager>().istrue == true)
+            {
+                agent.isStopped = false;
+                if (agent.hasPath && dist >= 2.0f)
+                {
+                    mat.color = Color.green;
+                    dist = 5;
+                    agent.SetDestination(-cover.position);
+                    if (agent.hasPath && dist >= 4.0f)
+                    {
+                        mat.color = Color.yellow;
+                        dist = 9;
+                        agent.SetDestination(-moveways.position);
+                        if (agent.hasPath && dist <= agent.stoppingDistance)
+                        {
+                            //Still
+                             
+                            mat.color = Color.white;
+                            agent.isStopped = true;
+                        }
+                    }
+                }
+            }
+            else if (soundref.GetComponent<CManager>().istrue == false && dist < 5.0f)
+            {
+                agent.isStopped = true;
+                mat.color = Color.red;
+            }
+            if (Audiodetection)
+            {
+                if (soundref.GetComponent<CManager>().loudeness >= 4.0f)
+                {
+                    StartCoroutine(Sounddetect());
+                }
+            }
+        }
+    }
+     
+     IEnumerator Sounddetect()
+    {
+        print("Sounddetected!");
+        
+        mat.color = Color.cyan;
+        //agent.isStopped = false;
+        soundref.GetComponent<CManager>().istrue = true;
+        agent.SetDestination(soundorigin.position);
+        yield return new WaitForSeconds(1.1f);         
+        mat.color = Color.red;
+        print("SoundOutreset");
+    }
+
+}
+ 
